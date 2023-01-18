@@ -26,8 +26,8 @@ pub struct Inning {
 pub struct PlayEvent {
     // Message for the announcer to read
     pub message: String,
-    // Whether to play a baseball hit sound before the message
-    pub hit: bool,
+    // Whether and how loud to play a baseball hit sound before the message
+    pub thwack: f32,
     // How loud happy crowd cheering should be, 0-1
     pub yay: f32,
     // How loud disappointed crowd cheering should be, 0-1

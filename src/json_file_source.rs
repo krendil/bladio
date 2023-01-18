@@ -2,6 +2,8 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::thread::{JoinHandle, spawn};
 use std::path::Path;
 use std::fs::File;
+use regex::Regex;
+use lazy_static::lazy_static;
 
 use serde::de::value::BoolDeserializer;
 use serde_json::{StreamDeserializer};
@@ -62,6 +64,24 @@ fn is_complete(data: &GameEventData) -> bool {
     });
 }
 
+fn get_thwack(data: &GameEventData) -> f32 {
+    lazy_static! {
+        static ref REGEX: Regex = Regex::new(
+        "(A [^ ]* hit to(ward)? .*\\.\\.\\.)|(.* ((hits)|(swats)|(slaps)|(rolls)|(drags)|(chops)|(thumps)|(bats)|(knocks)|(sputters)|(taps)|(pushes)) ((it)|(the pitch)|(the ball)|(one)) (in)?to(wards?)? .*\\.\\.\\.)"
+        ).unwrap();
+    }
+
+    // Detect fouls
+    if data.displayText.starts_with("Foul ball") 
+    || data.displayText.contains(" fouls it ")
+    || data.displayText.contains(" hits a foul"){
+        return 0.5;
+    } else if REGEX.is_match(&data.displayText) {
+        return 1.0;
+    }
+    return 0.0;
+}
+
 fn translate_event(data: GameEventData) -> Option<GameEvent> {
 
     if is_complete(&data) {
@@ -90,9 +110,10 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
     } else {
         let home_score = extract_i32(&data, "homeScore");
         let away_score = extract_i32(&data, "awayScore");
+        let thwack = get_thwack(&data);
         let event: PlayEvent = PlayEvent {
             message: data.displayText,
-            hit: false,
+            thwack: thwack,
             yay: 0.0,
             oh: 0.0,
             home_score: home_score,

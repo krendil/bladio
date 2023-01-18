@@ -44,6 +44,11 @@ impl GameState {
     }
 
     fn play_event(mut self, play_event: PlayEvent) -> GameState  {
+        if play_event.thwack > 0.75 {
+            println!("THWACK!");
+        } else if play_event.thwack > 0.0 {
+            println!("Thump.");
+        }
         println!("{}", play_event.message);
         match play_event.home_score {
             Some(score) => self.home_score = score,
