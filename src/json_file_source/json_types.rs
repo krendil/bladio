@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 
@@ -16,7 +18,7 @@ pub struct LogEvent {
 
 #[derive(Deserialize)]
 pub struct GameEventData {
-    pub changedState: serde_json::Value,
+    pub changedState: HashMap<String, serde_json::Value>,
     pub displayDelay: u32,
     pub displayOrder: u32,
     pub displayText: String,

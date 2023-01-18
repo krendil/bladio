@@ -5,6 +5,12 @@ pub struct Team {
 }
 
 #[derive(Debug)]
+pub enum Side {
+    Home,
+    Away
+}
+
+#[derive(Debug)]
 pub enum End {
     Top,
     Bottom
@@ -26,6 +32,9 @@ pub struct PlayEvent {
     pub yay: f32,
     // How loud disappointed crowd cheering should be, 0-1
     pub oh: f32,
+    // Optional: Update home/away scores
+    pub home_score: Option<i32>,
+    pub away_score: Option<i32>
 }
 
 #[derive(Debug)]

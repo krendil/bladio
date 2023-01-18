@@ -1,7 +1,7 @@
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread::{JoinHandle, spawn, self};
 
-use crate::events::{Team, GameEvent, PlayEvent, Inning};
+use crate::events::{Team, GameEvent, PlayEvent, Inning, Side};
 
 pub struct GameState {
 
@@ -43,8 +43,25 @@ impl GameState {
         return self;
     }
 
-    fn play_event(self, play_event: PlayEvent) -> GameState  {
+    fn play_event(mut self, play_event: PlayEvent) -> GameState  {
         println!("{}", play_event.message);
+        match play_event.home_score {
+            Some(score) => self.home_score = score,
+            None => ()
+        }
+
+        match play_event.away_score {
+            Some(score) => self.away_score = score,
+            None => ()
+        }
+        return self;
+    }
+
+    fn update_score(mut self, side: Side, score: i32) -> GameState {
+        match side {
+            Side::Home => self.home_score = score,
+            Side::Away => self.away_score = score,
+        }
         return self;
     }
 
@@ -58,8 +75,8 @@ impl GameState {
 
     fn game_end(self) -> GameState  {
         println!("Game over. {} {}, {} {}.",
-            self.home_team.short_name, self.home_score,
-            self.away_team.short_name, self.away_score);
+            self.home_team.full_name, self.home_score,
+            self.away_team.full_name, self.away_score);
 
         return self;
     }
