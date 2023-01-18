@@ -5,11 +5,11 @@ use std::fs::File;
 
 use serde_json::{StreamDeserializer};
 
-use crate::events::PlayEvent;
+use crate::events::{PlayEvent, GameEvent};
 
 mod json_types;
 
-pub fn new(filename: &str, tx: Sender<PlayEvent>) -> JoinHandle<i32> {
+pub fn new(filename: &str, tx: Sender<GameEvent>) -> JoinHandle<i32> {
     let filepath = Path::new(filename);
     let file = File::open(filepath).unwrap();
     return spawn(move || {
@@ -18,7 +18,7 @@ pub fn new(filename: &str, tx: Sender<PlayEvent>) -> JoinHandle<i32> {
     });
 }
 
-fn load_events_from_file(file: &File, tx: Sender<PlayEvent>) {
+fn load_events_from_file(file: &File, tx: Sender<GameEvent>) {
     let log: json_types::GameLog = serde_json::from_reader(file).unwrap();
     for item in log.items {
 
@@ -29,6 +29,9 @@ fn load_events_from_file(file: &File, tx: Sender<PlayEvent>) {
             oh: 0.0
         };
 
-        tx.send(event).unwrap();
+        tx.send(GameEvent::PlayEvent(event)).unwrap();
     }
+
+    tx.send(GameEvent::GameEnd()).unwrap();
+    tx.send(GameEvent::EndBroadcast()).unwrap();
 }

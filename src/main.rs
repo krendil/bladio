@@ -3,6 +3,7 @@ use clap::Parser;
 mod tts;
 mod json_file_source;
 mod events;
+mod game_state;
 
 #[derive(Parser, Debug)]
 #[command(author="Krendil",version="0.0.1",about="Blaseball radio broadcast",long_about=None)]
@@ -19,7 +20,8 @@ fn main() {
 
     // let _audio_thread
     let source_thread = json_file_source::new(&args.file_source, tx);
-    // let state_thread = 
+    let game_thread = game_state::spawn_game_thread(rx); 
 
-    source_thread.join();
+    source_thread.join().unwrap();
+    game_thread.join().unwrap();
 }
