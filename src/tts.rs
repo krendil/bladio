@@ -28,7 +28,12 @@ impl Speaker {
             let tts_class = mimic3.getattr("Mimic3TextToSpeechSystem")?;
             let opts_class = mimic3.getattr("Mimic3Settings")?;
 
-            let kwargs = [("length_scale",1.into_py(py)),("use_cuda",false.into_py(py))].into_py_dict(py);
+            let kwargs = [
+                ("length_scale",0.8.into_py(py)),
+                ("use_cuda",false.into_py(py)),
+                ("noise_scale",0.667.into_py(py)),
+                ("noise_w",0.8.into_py(py)),
+            ].into_py_dict(py);
             let opts = opts_class.call((), Some(kwargs))?;
 
             let tts = tts_class.call1((opts,))?;

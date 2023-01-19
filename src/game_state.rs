@@ -38,7 +38,7 @@ impl GameState {
         self.home_team = home;
         self.away_team = away;
         // Announce upcoming game
-        let message = format!("Pregame: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
+        let message = format!("Tuning in to: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
         self.announce.send(AnnounceEvent::Message(message)).unwrap();
         return self;
     }

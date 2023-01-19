@@ -80,6 +80,16 @@ fn get_thwack(data: &GameEventData) -> f32 {
     return 0.0;
 }
 
+fn clean_sfx(message: &str) -> String {
+    lazy_static! {
+        static ref REGEX: Regex = Regex::new(
+            "(BAM)|(BOOM)|(CRACK)|(SMACK)|(SMASH)|(THWACK)|(WHAM)!? *"
+        ).unwrap();
+    }
+
+    return REGEX.replace(message, "").to_string();
+}
+
 fn translate_event(data: GameEventData) -> Option<GameEvent> {
 
     if is_complete(&data) {
@@ -110,7 +120,7 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
         let away_score = extract_i32(&data, "awayScore");
         let thwack = get_thwack(&data);
         let event: PlayEvent = PlayEvent {
-            message: data.displayText,
+            message: clean_sfx(&data.displayText),
             thwack: thwack,
             yay: 0.0,
             oh: 0.0,
