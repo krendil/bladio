@@ -51,7 +51,7 @@ impl AnnounceChannel {
                 ChannelState::Waiting => samples_filled += self.wait(&mut buf[samples_filled..]),
                 ChannelState::Announcing => samples_filled += self.announce(&mut buf[samples_filled..]),
                 ChannelState::Idle => samples_filled += self.idle(&mut buf[samples_filled..]),
-                ChannelState::Sampling => (),
+                ChannelState::Sampling => samples_filled += self.sample(&mut buf[samples_filled..]),
                 ChannelState::Finished => break
             }
         }
@@ -90,6 +90,11 @@ impl AnnounceChannel {
         }
         buf.fill(0);
         return buf.len();
+    }
+
+    fn sample(&mut self, buf: &mut [Samp]) -> usize {
+        self.get_next_state();
+        return 0;
     }
 
     fn get_next_state(&mut self) {
