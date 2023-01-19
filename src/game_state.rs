@@ -1,9 +1,12 @@
 use std::sync::mpsc::{Sender, Receiver};
-use std::thread::{JoinHandle, spawn, self};
+use std::thread::{JoinHandle, self};
 
-use crate::events::{Team, GameEvent, PlayEvent, Inning, Side};
+use crate::announce_channel::AnnounceEvent;
+use crate::events::{Team, GameEvent, PlayEvent, Inning};
 
 pub struct GameState {
+
+    announce: Sender<AnnounceEvent>,
 
     home_team: Team,
     away_team: Team,
@@ -14,8 +17,9 @@ pub struct GameState {
 
 impl GameState {
 
-    fn new() -> GameState {
+    fn new(announce: Sender<AnnounceEvent>) -> GameState {
         return GameState {
+            announce: announce,
             home_team: Team {
                 full_name: "Default Team".to_string(),
                 short_name: "Default".to_string(),
@@ -34,12 +38,14 @@ impl GameState {
         self.home_team = home;
         self.away_team = away;
         // Announce upcoming game
-        println!("Pregame: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
+        let message = format!("Pregame: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
+        self.announce.send(AnnounceEvent::Message(message)).unwrap();
         return self;
     }
 
     fn play_ball(self) -> GameState  {
-        println!("Play ball!");
+        let message = format!("Play ball!");
+        self.announce.send(AnnounceEvent::Message(message)).unwrap();
         return self;
     }
 
@@ -54,47 +60,52 @@ impl GameState {
             None => ()
         }
 
-        if play_event.thwack > 0.75 {
-            println!("THWACK!");
-            // announce_channel.cue_thwack(play_event.thwack);
-            // announce_channel.cue_beat();
-        } else if play_event.thwack > 0.0 {
-            println!("Thump.");
+        if play_event.thwack > 0.0 {
+            self.announce.send(AnnounceEvent::Thwack(play_event.thwack)).unwrap();
+            self.announce.send(AnnounceEvent::Beat()).unwrap();
         }
-        // announce_channel.cue_announcement(play_event.message);
-            // announce_channel.cue_beat();
-        println!("{}", play_event.message);
+
+        self.announce.send(AnnounceEvent::Message(play_event.message)).unwrap();
+        self.announce.send(AnnounceEvent::Beat()).unwrap();
         return self;
     }
 
     fn inning_end(self, inning: Inning) -> GameState  {
-        println!("End of the {0:?} of the {1}. {2} {3}, {4} {5}.",
+        let message = format!("End of the {0:?} of the {1}. {2} {3}, {4} {5}.",
             inning.end, inning.number,
             self.home_team.short_name, self.home_score,
             self.away_team.short_name, self.away_score);
+        self.announce.send(AnnounceEvent::Message(message)).unwrap();
+        self.announce.send(AnnounceEvent::Beat()).unwrap();
         return self;
     }
 
     fn game_end(self) -> GameState  {
-        println!("Game over. {} {}, {} {}.",
+        let message = format!("Game over. {} {}, {} {}.",
             self.home_team.full_name, self.home_score,
             self.away_team.full_name, self.away_score);
+        self.announce.send(AnnounceEvent::Message(message)).unwrap();
 
+        return self;
+    }
+
+    fn end_broadcast(self) -> GameState {
+        self.announce.send(AnnounceEvent::Finish()).unwrap();
         return self;
     }
 
 
 }
 
-pub fn spawn_game_thread(rx: Receiver<GameEvent>) -> JoinHandle<i32> {
+pub fn spawn_game_thread(rx: Receiver<GameEvent>, tx: Sender<AnnounceEvent>) -> JoinHandle<i32> {
     return thread::spawn(move || {
-        game_loop(rx);
+        game_loop(rx, tx);
         return 0;
     });
 }
 
-fn game_loop(rx: Receiver<GameEvent>) {
-    let mut game = GameState::new();
+fn game_loop(rx: Receiver<GameEvent>, tx: Sender<AnnounceEvent>) {
+    let mut game = GameState::new(tx);
     loop {
         let ev = rx.recv().unwrap_or(GameEvent::EndBroadcast());
         game = match ev {
@@ -103,7 +114,7 @@ fn game_loop(rx: Receiver<GameEvent>) {
             GameEvent::PlayEvent(play_event) => game.play_event(play_event),
             GameEvent::InningEnd(inning) => game.inning_end(inning),
             GameEvent::GameEnd() => game.game_end(),
-            GameEvent::EndBroadcast() => break
+            GameEvent::EndBroadcast() => { game.end_broadcast(); break; }
         }
     }
 }

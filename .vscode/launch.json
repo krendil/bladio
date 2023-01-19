@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'bladio'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=bladio",
+                    "--package=bladio",
+                    "--",
+
+                ],
+                "filter": {
+                    "name": "bladio",
+                    "kind": "bin"
+                }
+            },
+            "args": ["-f", "test_data/games/S1D85_SteaksVsJazz_1.json"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'bladio'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=bladio",
+                    "--package=bladio"
+                ],
+                "filter": {
+                    "name": "bladio",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

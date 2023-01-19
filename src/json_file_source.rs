@@ -1,12 +1,10 @@
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender};
 use std::thread::{JoinHandle, spawn};
 use std::path::Path;
 use std::fs::File;
 use regex::Regex;
 use lazy_static::lazy_static;
 
-use serde::de::value::BoolDeserializer;
-use serde_json::{StreamDeserializer};
 
 use crate::events::{PlayEvent, GameEvent, Team, End, Inning};
 use crate::json_file_source::json_types::GameEventData;
@@ -90,8 +88,8 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
         return extract_i32(&data, "inning")
             .zip(
                 match data.changedState["topOfInning"] {
-                    serde_json::Value::Bool(b @ true) => Some(End::Top),
-                    serde_json::Value::Bool(b @ false) => Some(End::Bottom),
+                    serde_json::Value::Bool(true) => Some(End::Top),
+                    serde_json::Value::Bool(false) => Some(End::Bottom),
                     _ => None
                 }
             ).and_then(|(inning, end)| {

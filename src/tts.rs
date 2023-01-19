@@ -22,7 +22,7 @@ impl Speaker {
         return !self.buf.is_empty() || self.utter_result.is_some();
     }
 
-    pub fn say(&mut self, message: &str) -> PyResult<()> {
+    pub fn say(&mut self, message: &str) {
         return Python::with_gil(|py| {
             let mimic3 = py.import("mimic3_tts")?;
             let tts_class = mimic3.getattr("Mimic3TextToSpeechSystem")?;
@@ -37,8 +37,8 @@ impl Speaker {
             let results = tts.call_method0("end_utterance")?;
             self.utter_result = Some(results.into());
 
-            return Ok(());
-        });
+            return Ok::<(), PyErr>(());
+        }).unwrap();
     }
 
     pub fn next(&mut self, buf: &mut[Samp]) -> usize {
@@ -69,9 +69,8 @@ impl Speaker {
                         let n = iter.next();
                         if n.is_some() {
                             unsafe {
-                                let bytes = n.unwrap()?.getattr("bytes")?.extract::<&[u8]>()?;
+                                let bytes = n.unwrap()?.getattr("audio_bytes")?.extract::<&[u8]>()?;
                                 let (_, shorts, _) = bytes.align_to::<Samp>();
-                                
                                 samples_filled += self.partial_copy(shorts, &mut buf[samples_filled..]);
                             }
                         } else {
@@ -122,14 +121,14 @@ impl Speaker {
             return from.len();
         } else {
             to.copy_from_slice(&from[..to.len()]);
-            self.buf.copy_from_slice(&from[to.len()..]);
+            self.buf.extend_from_slice(&from[to.len()..]);
             return to.len();
         }
     }
 
 }
 
-pub fn mimic_test() {
+pub fn _mimic_test() {
     Python::with_gil(|py| {
         let foo = 3;
         // let mimic3 = Pymodule::Import(py, "mimic3_tts");
