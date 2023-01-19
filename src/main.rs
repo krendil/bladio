@@ -4,6 +4,8 @@ mod tts;
 mod json_file_source;
 mod events;
 mod game_state;
+mod announce_channel;
+mod types;
 
 #[derive(Parser, Debug)]
 #[command(author="Krendil",version="0.0.1",about="Blaseball radio broadcast",long_about=None)]
