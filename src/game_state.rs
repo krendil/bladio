@@ -62,7 +62,7 @@ impl GameState {
 
         if play_event.thwack > 0.0 {
             self.announce.send(AnnounceEvent::Thwack(play_event.thwack)).unwrap();
-            self.announce.send(AnnounceEvent::Beat()).unwrap();
+            // self.announce.send(AnnounceEvent::Beat()).unwrap();
         }
 
         self.announce.send(AnnounceEvent::Message(play_event.message)).unwrap();

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use announce_channel::AnnounceChannel;
 use clap::Parser;
 use vorbis_output::output_to_vorbis;
@@ -9,6 +11,7 @@ mod game_state;
 mod announce_channel;
 mod types;
 mod vorbis_output;
+mod sample_library;
 
 #[derive(Parser, Debug)]
 #[command(author="Krendil",version="0.0.1",about="Blaseball radio broadcast",long_about=None)]
@@ -21,13 +24,15 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    let mut thwacks = sample_library::SampleLibrary::new(Path::new("sfx/thwack"));
+
     let (game_tx, game_rx) = std::sync::mpsc::channel();
     let (announce_tx, announce_rx) = std::sync::mpsc::channel();
 
     // let _audio_thread
     let source_thread = json_file_source::new(&args.file_source, game_tx);
     let game_thread = game_state::spawn_game_thread(game_rx, announce_tx); 
-    let mut announcer = AnnounceChannel::new(announce_rx);
+    let mut announcer = AnnounceChannel::new(announce_rx, &mut thwacks);
     
     let mut outstream = std::io::stdout();
     let _encoder = output_to_vorbis(move |buf| {

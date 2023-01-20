@@ -1,6 +1,6 @@
-use std::sync::mpsc::{Receiver};
+use std::{sync::mpsc::{Receiver}, iter::zip};
 
-use crate::{types::Samp, tts::Speaker};
+use crate::{types::Samp, tts::Speaker, sample_library::SampleLibrary};
 
 pub enum AnnounceEvent {
     Beat(), // Short delay.
@@ -21,24 +21,28 @@ enum ChannelState {
     Finished
 }
 
-pub struct AnnounceChannel {
+pub struct AnnounceChannel<'a> {
     state: ChannelState,
     wait_left: u64,
-    volume: f32,
     rx: Receiver<AnnounceEvent>,
     speaker: Speaker,
+    thwacks: &'a SampleLibrary,
 
+    volume: f32,
+    current_sample: Option<&'a[Samp]>,
 }
 
-impl AnnounceChannel {
+impl<'a> AnnounceChannel<'a> {
 
-    pub fn new(rx: Receiver<AnnounceEvent>) -> AnnounceChannel {
+    pub fn new(rx: Receiver<AnnounceEvent>, thwacks: &'a mut SampleLibrary) -> AnnounceChannel<'a> {
         return AnnounceChannel {
             state: ChannelState::Idle,
             wait_left: 0,
             volume: 1.0,
             rx: rx,
-            speaker: Speaker::new()
+            speaker: Speaker::new(),
+            thwacks: thwacks,
+            current_sample: None
         };
     }
 
@@ -93,18 +97,43 @@ impl AnnounceChannel {
     }
 
     fn sample(&mut self, buf: &mut [Samp]) -> usize {
-        self.get_next_state();
-        return 0;
+        return match self.current_sample {
+            None => {
+                self.get_next_state(); 0
+            },
+            Some(sample) => {
+                if buf.len() >= sample.len() {
+                    for (s, b) in zip(sample, buf) {
+                        *b = *s * self.volume;
+                    }
+                    self.current_sample = None;
+                    sample.len()
+                } else {
+                    // buf.copy_from_slice(&sample[..buf.len()]);
+                    let samples_copied = buf.len();
+                    for (s, b) in zip(sample, buf) {
+                        *b = *s * self.volume;
+                    }
+                    self.current_sample = Some(&sample[samples_copied..]);
+                    samples_copied
+                }
+            }
+        };
     }
 
-    fn get_next_state(&mut self) {
+    fn get_next_state(&mut self)
+    {
         /*
         self.state = self.rx.try_recv().map_or(ChannelState::Idle, |ev| {
             */
         self.state = self.rx.recv().map_or(ChannelState::Finished, |ev|{
             return match ev {
                 AnnounceEvent::Beat() => { self.wait_left = BEAT_LENGTH; ChannelState::Waiting },
-                AnnounceEvent::Thwack(t) => { self.volume = t; ChannelState::Sampling },
+                AnnounceEvent::Thwack(t) => {
+                    self.current_sample = Some(self.thwacks.get(fastrand::usize(..self.thwacks.len())));
+                    self.volume = t; 
+                    ChannelState::Sampling
+                },
                 AnnounceEvent::Delay(d) => { self.wait_left = d; ChannelState::Waiting },
                 AnnounceEvent::Message(s) => { self.speaker.say(&s); ChannelState::Announcing },
                 AnnounceEvent::Finish() => ChannelState::Finished

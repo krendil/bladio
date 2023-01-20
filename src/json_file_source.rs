@@ -73,9 +73,9 @@ fn get_thwack(data: &GameEventData) -> f32 {
     if data.displayText.starts_with("Foul ball") 
     || data.displayText.contains(" fouls it ")
     || data.displayText.contains(" hits a foul"){
-        return 0.5;
+        return 0.3;
     } else if REGEX.is_match(&data.displayText) {
-        return 1.0;
+        return 1.2;
     }
     return 0.0;
 }
