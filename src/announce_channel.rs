@@ -60,11 +60,11 @@ impl AnnounceChannel {
 
     fn wait(&mut self, buf: &mut [Samp]) -> usize {
         if self.wait_left > (buf.len() as u64) {
-            buf.fill(0);
+            buf.fill(0.0);
             self.wait_left -= buf.len() as u64;
             return buf.len();
         } else {
-            buf[..(self.wait_left as usize)].fill(0);
+            buf[..(self.wait_left as usize)].fill(0.0);
             let filled = self.wait_left as usize;
             self.wait_left = 0;
             self.get_next_state();
@@ -88,7 +88,7 @@ impl AnnounceChannel {
                 return 0;
             }
         }
-        buf.fill(0);
+        buf.fill(0.0);
         return buf.len();
     }
 

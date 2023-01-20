@@ -75,8 +75,8 @@ impl Speaker {
                         if n.is_some() {
                             unsafe {
                                 let bytes = n.unwrap()?.getattr("audio_bytes")?.extract::<&[u8]>()?;
-                                let (_, shorts, _) = bytes.align_to::<Samp>();
-                                samples_filled += self.partial_copy(shorts, &mut buf[samples_filled..]);
+                                let (_, shorts, _): (_, &[i16], _) = bytes.align_to::<i16>();
+                                samples_filled += self.partial_copy_and_convert(shorts, &mut buf[samples_filled..]);
                             }
                         } else {
                             result_exhausted = true;
@@ -119,14 +119,21 @@ impl Speaker {
         return samples_written;
     }
     // Copy what we can and stash the rest in self.buf
-    fn partial_copy(&mut self, from: &[Samp], to: &mut [Samp]) -> usize {
+    fn partial_copy_and_convert(&mut self, from: &[i16], to: &mut [Samp]) -> usize {
         if to.len() >= from.len() {
-            to[..from.len()].copy_from_slice(from);
+            for (i, s) in from.iter().enumerate() {
+                to[i] = (*s as Samp) / 32768.0;
+            }
             self.buf.truncate(0);
             return from.len();
         } else {
-            to.copy_from_slice(&from[..to.len()]);
-            self.buf.extend_from_slice(&from[to.len()..]);
+            for (i, s) in from.iter().take(to.len()).enumerate() {
+                to[i] = (*s as Samp) / 32768.0;
+            }
+            self.buf.reserve(from.len() - to.len());
+            for s in from.iter().skip(to.len()) {
+                self.buf.push( (*s as Samp) / 32768.0 );
+            }
             return to.len();
         }
     }
