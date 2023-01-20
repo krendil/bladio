@@ -1,4 +1,3 @@
-use std::ops::Not;
 
 #[derive(Debug)]
 pub struct Team {
@@ -7,14 +6,8 @@ pub struct Team {
 }
 
 #[derive(Debug)]
-pub enum Side {
-    Home,
-    Away
-}
-
-#[derive(Debug)]
 pub struct Inning {
-    pub wasTop: bool,
+    pub was_top: bool,
     pub number: i32
 }
 
@@ -30,7 +23,9 @@ pub struct PlayEvent {
     pub oh: f32,
     // Optional: Update home/away scores
     pub home_score: Option<i32>,
-    pub away_score: Option<i32>
+    pub away_score: Option<i32>,
+    // Optional: Update outs
+    pub outs: Option<i32>,
 }
 
 #[derive(Debug)]

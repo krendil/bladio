@@ -66,16 +66,27 @@ impl GameState {
 
         self.announce.send(AnnounceEvent::Message(play_event.message)).unwrap();
         self.announce.send(AnnounceEvent::Beat()).unwrap();
+
+        match play_event.outs {
+            Some(1) => self.announce.send(AnnounceEvent::Message(format!("First out."))),
+            Some(2) => self.announce.send(AnnounceEvent::Message(format!("Second out."))),
+            _ => Ok(()),
+        }.unwrap();
+
         return self;
     }
 
     fn inning_end(self, inning: Inning) -> GameState  {
         let message = format!("End of the {0:?} of the {1}. {2} {3}, {4} {5}.",
-            if inning.wasTop { "top" } else { "bottom" }, inning.number,
+            if inning.was_top { "top" } else { "bottom" }, inning.number,
             self.home_team.short_name, self.home_score,
             self.away_team.short_name, self.away_score);
         self.announce.send(AnnounceEvent::Message(message)).unwrap();
         self.announce.send(AnnounceEvent::Beat()).unwrap();
+        let message2 = format!("{} is at bat.", 
+            if inning.was_top { &self.home_team.short_name } else { &self.away_team.short_name }
+        );
+        self.announce.send(AnnounceEvent::Message(message2)).unwrap();
         return self;
     }
 

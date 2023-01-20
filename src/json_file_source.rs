@@ -6,7 +6,7 @@ use regex::Regex;
 use lazy_static::lazy_static;
 
 
-use crate::events::{PlayEvent, GameEvent, Team, End, Inning};
+use crate::events::{PlayEvent, GameEvent, Team, Inning};
 use crate::json_file_source::json_types::GameEventData;
 
 mod json_types;
@@ -25,9 +25,9 @@ fn load_events_from_file(file: &File, tx: Sender<GameEvent>) {
 
     // These dumps don't contain match info, so hardcode it
     tx.send(GameEvent::Pregame(Team {
-        full_name: "Mexico City Wild Wings".to_string(), short_name: "Wild Wings".to_string()
-    }, Team{
         full_name: "Charleston Shoe Thieves".to_string(), short_name: "Shoe Thieves".to_string()
+    }, Team{
+        full_name: "Mexico City Wild Wings".to_string(), short_name: "Wild Wings".to_string()
     })).unwrap();
     // tx.send(GameEvent::Pregame(Team {
     //     full_name: "Breckenridge Jazz Hands".to_string(), short_name: "Jazz Hands".to_string()
@@ -106,10 +106,10 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
                     serde_json::Value::Bool(b) => Some(b),
                     _ => None
                 }
-            ).and_then(|(inning, isTop)| {
+            ).and_then(|(inning, is_top)| {
                 return Some(GameEvent::InningEnd(Inning{
-                    number: if isTop { inning } else { inning + 1 },
-                    wasTop: !isTop,
+                    number: if is_top { inning } else { inning + 1 },
+                    was_top: !is_top,
                 }));
             })
         ;
@@ -122,6 +122,7 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
     } else {
         let home_score = extract_i32(&data, "homeScore");
         let away_score = extract_i32(&data, "awayScore");
+        let outs = extract_i32(&data, "outs");
         let thwack = get_thwack(&data);
         let event: PlayEvent = PlayEvent {
             message: clean_sfx(&data.displayText),
@@ -129,7 +130,8 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
             yay: 0.0,
             oh: 0.0,
             home_score: home_score,
-            away_score: away_score
+            away_score: away_score,
+            outs: outs,
         };
         return Some(GameEvent::PlayEvent(event));
     }
