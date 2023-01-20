@@ -38,7 +38,7 @@ impl GameState {
         self.home_team = home;
         self.away_team = away;
         // Announce upcoming game
-        let message = format!("Tuning in to: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
+        let message = format!("This is radio blaseball one thirteen point four. Next up: {} vs {}.", self.home_team.full_name, self.away_team.full_name);
         self.announce.send(AnnounceEvent::Message(message)).unwrap();
         return self;
     }
@@ -62,7 +62,6 @@ impl GameState {
 
         if play_event.thwack > 0.0 {
             self.announce.send(AnnounceEvent::Thwack(play_event.thwack)).unwrap();
-            // self.announce.send(AnnounceEvent::Beat()).unwrap();
         }
 
         self.announce.send(AnnounceEvent::Message(play_event.message)).unwrap();
@@ -72,7 +71,7 @@ impl GameState {
 
     fn inning_end(self, inning: Inning) -> GameState  {
         let message = format!("End of the {0:?} of the {1}. {2} {3}, {4} {5}.",
-            inning.end, inning.number,
+            if inning.wasTop { "top" } else { "bottom" }, inning.number,
             self.home_team.short_name, self.home_score,
             self.away_team.short_name, self.away_score);
         self.announce.send(AnnounceEvent::Message(message)).unwrap();

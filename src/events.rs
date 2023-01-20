@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 #[derive(Debug)]
 pub struct Team {
     pub full_name: String,
@@ -11,14 +13,8 @@ pub enum Side {
 }
 
 #[derive(Debug)]
-pub enum End {
-    Top,
-    Bottom
-}
-
-#[derive(Debug)]
 pub struct Inning {
-    pub end: End,
+    pub wasTop: bool,
     pub number: i32
 }
 

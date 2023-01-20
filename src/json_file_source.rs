@@ -25,10 +25,15 @@ fn load_events_from_file(file: &File, tx: Sender<GameEvent>) {
 
     // These dumps don't contain match info, so hardcode it
     tx.send(GameEvent::Pregame(Team {
-        full_name: "Breckenridge Jazz Hands".to_string(), short_name: "Jazz Hands".to_string()
+        full_name: "Mexico City Wild Wings".to_string(), short_name: "Wild Wings".to_string()
     }, Team{
-        full_name: "Dallas Steaks".to_string(), short_name: "Steaks".to_string()
+        full_name: "Charleston Shoe Thieves".to_string(), short_name: "Shoe Thieves".to_string()
     })).unwrap();
+    // tx.send(GameEvent::Pregame(Team {
+    //     full_name: "Breckenridge Jazz Hands".to_string(), short_name: "Jazz Hands".to_string()
+    // }, Team{
+    //     full_name: "Dallas Steaks".to_string(), short_name: "Steaks".to_string()
+    // })).unwrap();
 
     for item in log.items {
 
@@ -65,7 +70,7 @@ fn is_complete(data: &GameEventData) -> bool {
 fn get_thwack(data: &GameEventData) -> f32 {
     lazy_static! {
         static ref REGEX: Regex = Regex::new(
-        "(A [^ ]* hit to(ward)? .*\\.\\.\\.)|(.* ((hits)|(swats)|(slaps)|(rolls)|(drags)|(chops)|(thumps)|(bats)|(knocks)|(sputters)|(taps)|(pushes)) ((it)|(the pitch)|(the ball)|(one)) (in)?to(wards?)? .*\\.\\.\\.)"
+        "(A [^ ]* hit to(ward)? .*\\.\\.\\.)|(.* ((hits)|(swats)|(slaps)|(rolls)|(drags)|(chops)|(thumps)|(bats)|(knocks)|(sputters)|(taps)|(pushes)|(clips)) ((it)|(the pitch)|(the ball)|(one)) (in)?to(wards?)? .*\\.\\.\\.)"
         ).unwrap();
     }
 
@@ -98,14 +103,13 @@ fn translate_event(data: GameEventData) -> Option<GameEvent> {
         return extract_i32(&data, "inning")
             .zip(
                 match data.changedState["topOfInning"] {
-                    serde_json::Value::Bool(true) => Some(End::Top),
-                    serde_json::Value::Bool(false) => Some(End::Bottom),
+                    serde_json::Value::Bool(b) => Some(b),
                     _ => None
                 }
-            ).and_then(|(inning, end)| {
+            ).and_then(|(inning, isTop)| {
                 return Some(GameEvent::InningEnd(Inning{
-                    number: inning,
-                    end: end,
+                    number: if isTop { inning } else { inning + 1 },
+                    wasTop: !isTop,
                 }));
             })
         ;
